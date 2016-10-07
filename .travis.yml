@@ -1,6 +1,6 @@
 language: go
 
-script: go test -race -v ./...
+script: go test -race -v ./reddit/...
 
 go:
   - 1.5.4
