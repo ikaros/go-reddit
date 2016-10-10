@@ -24,7 +24,7 @@ func main() {
 		"com.github.ikaros.go-reddit", "v0.0.1", "anon")
 
 	// This is the only way to set the User-Agent header for the
-	// way how the oauth2 package aquires the access_token.
+	// way how the oauth2 package acquires the access_token.
 	// Aaaand reddit is VERY PICKY about the useragent. Even for a single request.
 	http.DefaultClient.Transport = reddit.WrapHTTPTransport(rc.UserAgent,
 		http.DefaultTransport)

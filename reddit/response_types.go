@@ -42,7 +42,7 @@ type Listing struct {
 	After *string `json:"after"`
 
 	// This modhash is not the same modhash provided upon login.
-	// You do not need to update your user's modhash everytime you
+	// You do not need to update your user's modhash every time you
 	// get a new modhash.  You can reuse the modhash given upon login.
 	ModHash string `json:"modhash"`
 

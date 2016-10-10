@@ -155,11 +155,16 @@ func CheckResponse(resp *http.Response) error {
 		return rle
 	}
 	apiErr := &APIError{}
-	if err := json.NewDecoder(resp.Body).Decode(apiErr); err == nil {
+	rawJSON, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	err = json.NewDecoder(bytes.NewReader(rawJSON)).Decode(apiErr)
+	if err != nil {
+		apiErr.Message = string(rawJSON)
+		apiErr.ErrorCode = resp.StatusCode
 		return apiErr
 	}
-	apiErr.Message = "No Message"
-	apiErr.ErrorCode = resp.StatusCode
 	return apiErr
 }
 
@@ -224,5 +229,5 @@ type APIError struct {
 }
 
 func (e *APIError) Error() string {
-	return fmt.Sprintf("%d: %s", e.Message, e.ErrorCode)
+	return fmt.Sprintf("%d: %s", e.ErrorCode, e.Message)
 }
