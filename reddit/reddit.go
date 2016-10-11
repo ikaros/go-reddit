@@ -114,19 +114,13 @@ func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
 		io.CopyN(ioutil.Discard, resp.Body, 512)
 		resp.Body.Close()
 	}()
-	err = CheckResponse(resp)
-	if err != nil {
-		switch err := err.(type) {
-		case *RateLimitError:
-			fmt.Println("Rate limit hit")
-			return resp, err
-		case *RateLimitHeaderError:
-			return resp, err
-		default:
-			return resp, err
-		}
+	if err := CheckResponse(resp); err != nil {
+		return resp, err
 	}
-	return resp, json.NewDecoder(resp.Body).Decode(v)
+	if v != nil {
+		return resp, json.NewDecoder(resp.Body).Decode(v)
+	}
+	return resp, nil
 }
 
 type (

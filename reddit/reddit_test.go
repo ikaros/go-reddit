@@ -2,7 +2,9 @@ package reddit
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"net/url"
+	"reflect"
 	"testing"
 )
 
@@ -87,5 +89,34 @@ func TestNewRequestJSONHeader(t *testing.T) {
 	}
 	if q.Get("raw_json") != "1" {
 		t.Error("Client requests don't set the raw_json header")
+	}
+}
+
+func TestClientDoRateLimitErr(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Ratelimit-Used", "10")
+		w.Header().Set("X-Ratelimit-Remaining", "20")
+		w.Header().Set("X-Ratelimit-Reset", "30")
+		w.WriteHeader(429)
+	}))
+	defer ts.Close()
+	req, err := http.NewRequest("GET", ts.URL, nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, err = NewClient(nil).Do(req, nil)
+	rateErr, ok := err.(*RateLimitError)
+	if !ok {
+		t.Error("No RateLimitError returned:", err.Error())
+		return
+	}
+	e := &RateLimitError{
+		Used:      10,
+		Remaining: 20,
+		Reset:     30,
+	}
+	if !reflect.DeepEqual(rateErr, e) {
+		t.Error("RateLimitError was '%#v' instead of '%#v'", rateErr, e)
 	}
 }
