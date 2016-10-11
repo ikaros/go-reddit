@@ -40,6 +40,7 @@ func rateLimitErrorFromResp(resp *http.Response) (*RateLimitError, error) {
 }
 
 func ratelimitGetInt(resp *http.Response, header string) (int, error) {
+	//fmt.Printf("%#v\n", *resp)
 	h := resp.Header.Get(header)
 	if h == "" {
 		return 0, &RateLimitHeaderError{
