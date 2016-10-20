@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 // RateLimitError provides values for rate limiting.
@@ -71,4 +72,17 @@ type RateLimitHeaderError struct {
 
 func (e *RateLimitHeaderError) Error() string {
 	return e.Message
+}
+
+type rateLimit struct {
+	// Approximate number of requests used in this period.
+	// Header: X-Ratelimit-Used
+	Used int
+
+	// Approximate number of requests left to use.
+	// Header: X-Ratelimit-Remaining
+	Remaining int
+
+	// Time when the RateLimit is reset
+	Reset time.Time
 }
