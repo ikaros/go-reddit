@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/ikaros/go-readdit/tree/master.svg?style=shield)][circleci]
+[![CircleCI](https://circleci.com/gh/ikaros/go-reddit.svg?style=shield)](https://circleci.com/gh/ikaros/go-reddit)
 [![Build Status](https://travis-ci.org/ikaros/go-reddit.svg?branch=master)](https://travis-ci.org/ikaros/go-reddit)
 [![GoDoc](https://godoc.org/github.com/ikaros/go-reddit/reddit?status.svg)](https://godoc.org/github.com/ikaros/go-reddit/reddit)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ikaros/go-reddit)](https://goreportcard.com/report/github.com/ikaros/go-reddit)
