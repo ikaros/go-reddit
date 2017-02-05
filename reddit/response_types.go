@@ -308,7 +308,7 @@ type Subreddit struct {
 
 	// Number of minutes the subreddit initially
 	// hides comment scores.
-	commentScoreHideMins int `json:"comment_score_hide_mins"`
+	CommentScoreHideMins int `json:"comment_score_hide_mins"`
 
 	// Sidebar text.
 	Description string `json:"description"`

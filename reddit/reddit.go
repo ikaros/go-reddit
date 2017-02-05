@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/url"
 	"runtime"
+	"sync"
+	"time"
 )
 
 // Client handles communication with the reddit API.
@@ -34,6 +36,9 @@ type Client struct {
 	Subreddits      *SubredditsService
 	Users           *UsersService
 	Wiki            *WikiService
+
+	rateLimitMu sync.Mutex
+	rateLimit   *rateLimit
 }
 
 // Semantic Version
@@ -114,19 +119,49 @@ func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
 		io.CopyN(ioutil.Discard, resp.Body, 512)
 		resp.Body.Close()
 	}()
-	err = CheckResponse(resp)
-	if err != nil {
-		switch err := err.(type) {
-		case *RateLimitError:
-			fmt.Println("Rate limit hit")
-			return resp, err
-		case *RateLimitHeaderError:
-			return resp, err
-		default:
-			return resp, err
-		}
+	if err := CheckResponse(resp); err != nil {
+		return resp, err
 	}
-	return resp, json.NewDecoder(resp.Body).Decode(v)
+	if v != nil {
+		return resp, json.NewDecoder(resp.Body).Decode(v)
+	}
+	return resp, nil
+}
+
+func (c *Client) updateRateLimit(resp *http.Response) error {
+	var err error
+	t := time.Now()
+	rl := rateLimit{}
+	rl.Used, err = ratelimitGetInt(resp, "X-Ratelimit-Used")
+	if err != nil {
+		return err
+	}
+	rl.Remaining, err = ratelimitGetInt(resp, "X-Ratelimit-Remaining")
+	if err != nil {
+		return err
+	}
+	resetSec, err := ratelimitGetInt(resp, "X-Ratelimit-Reset")
+	if err != nil {
+		return err
+	}
+	rl.Reset = t.Add(time.Duration(resetSec) * time.Second)
+	c.rateLimitMu.Lock()
+	defer c.rateLimitMu.Unlock()
+	c.rateLimit = &rl
+	return nil
+}
+
+func (c *Client) RateLimitHit() bool {
+	c.rateLimitMu.Lock()
+	defer c.rateLimitMu.Unlock()
+	if c.rateLimit == nil {
+		return false
+	}
+	if c.rateLimit.Reset.Before(time.Now()) {
+		c.rateLimit = nil
+		return false
+	}
+	return false
 }
 
 type (
@@ -230,4 +265,9 @@ type APIError struct {
 
 func (e *APIError) Error() string {
 	return fmt.Sprintf("%d: %s", e.ErrorCode, e.Message)
+}
+
+type rateLimiter struct {
+	err error
+	sync.RWMutex
 }
